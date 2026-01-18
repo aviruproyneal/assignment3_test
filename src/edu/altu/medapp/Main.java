@@ -1,5 +1,3 @@
-// Avirup and Vadim
-
 package edu.altu.medapp;
 
 import edu.altu.medapp.model.Appointment;

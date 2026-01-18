@@ -18,7 +18,6 @@ public class Patient {
         this.dateOfBirth = dateOfBirth;
     }
 
-    // Getters and Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -36,6 +35,7 @@ public class Patient {
 
     @Override
     public String toString() {
-        return "Patient{id=" + id + ", name='" + name + "', email='" + email + "', phone='" + phone + "'}";
+        return "Patient{id=" + id + ", name='" + name + "', email='" +
+                email + "', phone='" + phone + "'}";
     }
 }

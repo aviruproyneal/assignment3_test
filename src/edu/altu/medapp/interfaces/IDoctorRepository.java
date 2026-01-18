@@ -1,4 +1,4 @@
-package edu.altu.medapp.repository.interfaces;
+package edu.altu.medapp.interfaces;
 
 import edu.altu.medapp.model.Doctor;
 import java.util.List;

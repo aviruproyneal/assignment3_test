@@ -14,7 +14,6 @@ public class Doctor {
         this.isAvailable = isAvailable;
     }
 
-    // Getters and Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -29,6 +28,7 @@ public class Doctor {
 
     @Override
     public String toString() {
-        return "Doctor{id=" + id + ", name='" + name + "', specialization='" + specialization + "', available=" + isAvailable + "}";
+        return "Doctor{id=" + id + ", name='" + name + "', specialization='" +
+                specialization + "', available=" + isAvailable + "}";
     }
 }

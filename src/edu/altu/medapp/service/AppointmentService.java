@@ -19,25 +19,14 @@ public class AppointmentService {
     }
 
     public Appointment bookAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        // Check if doctor is available
-        doctorAvailabilityService.checkDoctorAvailability(doctorId);
-
-        // Check if time slot is already booked
-        if (appointmentRepository.isTimeSlotBooked(doctorId, appointmentTime)) {
-            throw new AppointmentConflictException("Time slot " + appointmentTime + " is already booked for this doctor");
-        }
-
-        // Create and save appointment
+        validateAppointment(doctorId, appointmentTime);
         Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, "scheduled");
         appointmentRepository.save(appointment);
-
         return appointment;
     }
 
     public void cancelAppointment(int appointmentId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
-
+        Appointment appointment = findAppointment(appointmentId);
         appointment.setStatus("cancelled");
         appointmentRepository.update(appointment);
     }
@@ -51,8 +40,7 @@ public class AppointmentService {
     }
 
     public Appointment getAppointmentById(int appointmentId) {
-        return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
+        return findAppointment(appointmentId);
     }
 
     public List<Appointment> getAllAppointments() {
@@ -60,15 +48,21 @@ public class AppointmentService {
     }
 
     public void rescheduleAppointment(int appointmentId, LocalDateTime newTime) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
-
-        // Check if new time slot is available
-        if (appointmentRepository.isTimeSlotBooked(appointment.getDoctorId(), newTime)) {
-            throw new AppointmentConflictException("Time slot " + newTime + " is already booked");
-        }
-
+        Appointment appointment = findAppointment(appointmentId);
+        validateAppointment(appointment.getDoctorId(), newTime);
         appointment.setAppointmentTime(newTime);
         appointmentRepository.update(appointment);
+    }
+
+    private void validateAppointment(int doctorId, LocalDateTime time) {
+        doctorAvailabilityService.checkDoctorAvailability(doctorId);
+        if (appointmentRepository.isTimeSlotBooked(doctorId, time)) {
+            throw new AppointmentConflictException("Time slot " + time + " is already booked");
+        }
+    }
+
+    private Appointment findAppointment(int appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
     }
 }

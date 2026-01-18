@@ -3,6 +3,10 @@ package edu.altu.medapp.model;
 import java.time.LocalDateTime;
 
 public class Appointment {
+    public static final String STATUS_SCHEDULED = "scheduled";
+    public static final String STATUS_CANCELLED = "cancelled";
+    public static final String STATUS_COMPLETED = "completed";
+
     private int id;
     private int patientId;
     private int doctorId;
@@ -18,7 +22,6 @@ public class Appointment {
         this.status = status;
     }
 
-    // Getters and Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

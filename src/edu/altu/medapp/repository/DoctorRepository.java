@@ -112,7 +112,7 @@ public class DoctorRepository implements IDoctorRepository {
         }
     }
 
-    @Override
+    @Override  // ← ADD THIS LINE
     public void delete(int id) {
         String sql = "DELETE FROM doctors WHERE id = ?";
         try (Connection conn = getConnection();

@@ -9,6 +9,10 @@ import edu.altu.medapp.service.exceptions.DoctorUnavailableException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.util.Comparator;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorAvailabilityService doctorAvailabilityService;
@@ -64,5 +68,35 @@ public class AppointmentService {
     private Appointment findAppointment(int appointmentId) {
         return appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
+    }
+
+
+    public List<Appointment> filterAppointments(Predicate<Appointment> filterCondition) {
+        return appointmentRepository.findAll().stream()
+                .filter(filterCondition)
+                .collect(Collectors.toList());
+    }
+
+    public List<Appointment> getAppointmentsSorted(Comparator<Appointment> sorter) {
+        return appointmentRepository.findAll().stream()
+                .sorted(sorter)
+                .collect(Collectors.toList());
+    }
+
+    public List<Appointment> findAppointmentsWithCondition(Predicate<Appointment> condition) {
+        return appointmentRepository.findAll().stream()
+                .filter(condition)
+                .collect(Collectors.toList());
+    }
+
+    public List<Appointment> getHighPriorityAppointments() {
+        return filterAppointments(appt ->
+                appt.getAppointmentTime().isBefore(java.time.LocalDateTime.now().plusDays(1)) &&
+                        appt.getStatus().equals("scheduled")
+        );
+    }
+
+    public List<Appointment> getAppointmentsSortedByTime() {
+        return getAppointmentsSorted(Comparator.comparing(Appointment::getAppointmentTime));
     }
 }

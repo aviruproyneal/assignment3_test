@@ -5,6 +5,10 @@ import edu.altu.medapp.model.Doctor;
 import edu.altu.medapp.service.AppointmentService;
 import edu.altu.medapp.service.DoctorAvailabilityService;
 
+import edu.altu.medapp.service.*;
+import edu.altu.medapp.model.AppointmentSummary;
+import java.util.Optional;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,6 +28,10 @@ public class Main {
             System.out.println("3. View Doctor's Schedule");
             System.out.println("4. View Patient's Upcoming Visits");
             System.out.println("5. Exit");
+            System.out.println("6. Book Appointment with Type (Advanced)");
+            System.out.println("7. Generate Appointment Summary");
+            System.out.println("8. View Today's Appointments");
+            System.out.println("9. Clinic Information");
             System.out.print("Choose option: ");
 
             String choice = scanner.nextLine();
@@ -45,6 +53,18 @@ public class Main {
                     System.out.println("Goodbye!");
                     scanner.close();
                     return;
+                case "6":
+                    bookAppointmentWithType(scanner);
+                    break;
+                case "7":
+                    generateAppointmentSummary(scanner);
+                    break;
+                case "8":
+                    viewTodayAppointments();
+                    break;
+                case "9":
+                    showClinicInfo();
+                    break;
                 default:
                     System.out.println("Invalid option");
             }
@@ -149,5 +169,110 @@ public class Main {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+
+    private static void bookAppointmentWithType(Scanner scanner) {
+        System.out.println("\n--- Book Appointment with Type ---");
+
+        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
+
+        try {
+            System.out.print("Enter patient ID: ");
+            int patientId = Integer.parseInt(scanner.nextLine());
+
+            System.out.print("Enter doctor ID: ");
+            int doctorId = Integer.parseInt(scanner.nextLine());
+
+            System.out.print("Enter date and time (YYYY-MM-DD HH:MM): ");
+            String dateTimeStr = scanner.nextLine();
+            LocalDateTime appointmentTime = LocalDateTime.parse(dateTimeStr,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+            System.out.println("\nAppointment Types:");
+            System.out.println("1. Online Consultation");
+            System.out.println("2. In-Person Visit");
+            System.out.println("3. Follow-Up");
+            System.out.print("Choose type (1-3): ");
+
+            int typeChoice = Integer.parseInt(scanner.nextLine());
+            AppointmentFactory.AppointmentType type;
+
+            switch (typeChoice) {
+                case 1: type = AppointmentFactory.AppointmentType.ONLINE; break;
+                case 2: type = AppointmentFactory.AppointmentType.IN_PERSON; break;
+                case 3: type = AppointmentFactory.AppointmentType.FOLLOW_UP; break;
+                default:
+                    System.out.println("Invalid type, defaulting to In-Person");
+                    type = AppointmentFactory.AppointmentType.IN_PERSON;
+            }
+
+            Result<Appointment> result = enhancedService.bookAppointmentWithType(
+                    patientId, doctorId, appointmentTime, type
+            );
+
+            if (result.isSuccess()) {
+                System.out.println("Appointment booked successfully! ID: " +
+                        result.getData().getId());
+            } else {
+                System.out.println("Failed to book appointment: " +
+                        result.getErrorMessage());
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void generateAppointmentSummary(Scanner scanner) {
+        System.out.println("\n--- Generate Appointment Summary ---");
+
+        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
+
+        try {
+            System.out.print("Enter appointment ID: ");
+            int appointmentId = Integer.parseInt(scanner.nextLine());
+
+            Optional<AppointmentSummary> summary =
+                    enhancedService.generateAppointmentSummary(appointmentId);
+
+            if (summary.isPresent()) {
+                System.out.println("\n=== Appointment Summary ===");
+                System.out.println(summary.get());
+            } else {
+                System.out.println("Appointment not found");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void viewTodayAppointments() {
+        System.out.println("\n--- Today's Appointments ---");
+
+        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
+        List<Appointment> todayAppointments = enhancedService.getTodayAppointments();
+
+        if (todayAppointments.isEmpty()) {
+            System.out.println("No appointments scheduled for today");
+        } else {
+            System.out.println("Today's Appointments (" + todayAppointments.size() + "):");
+            todayAppointments.forEach(appt ->
+                    System.out.println("ID: " + appt.getId() +
+                            ", Doctor: " + appt.getDoctorId() +
+                            ", Time: " + appt.getAppointmentTime().toLocalTime() +
+                            ", Status: " + appt.getStatus())
+            );
+        }
+    }
+
+    private static void showClinicInfo() {
+        System.out.println("\n--- Clinic Information ---");
+
+        ClinicConfig config = ClinicConfig.getInstance();
+        System.out.println("Working Hours: " + config.getWorkingHoursString());
+        System.out.println("Appointment Duration: " + config.getAppointmentDurationMinutes() + " minutes");
+        System.out.println("Max Appointments Per Day: " + config.getMaxAppointmentsPerDay());
     }
 }

@@ -147,7 +147,7 @@ public class AppointmentRepository implements IAppointmentRepository {
         }
     }
 
-    @Override
+    @Override  // ← ADD THIS LINE
     public void delete(int id) {
         String sql = "DELETE FROM appointments WHERE id = ?";
         try (Connection conn = getConnection();

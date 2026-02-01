@@ -6,14 +6,7 @@ import java.time.LocalDateTime;
 public class InPersonAppointment implements IAppointmentType {
     @Override
     public Appointment createAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        return new Appointment(
-                patientId,
-                doctorId,
-                appointmentTime,
-                "scheduled",
-                Appointment.TYPE_IN_PERSON,
-                getBaseFee()
-        );
+        return new Appointment(patientId, doctorId, appointmentTime, "scheduled", Appointment.TYPE_IN_PERSON, getBaseFee());
     }
 
     @Override

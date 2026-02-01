@@ -115,8 +115,7 @@ public class Main {
 
             System.out.print("Enter date and time (YYYY-MM-DD HH:MM): ");
             String dateTimeStr = scanner.nextLine();
-            LocalDateTime appointmentTime = LocalDateTime.parse(dateTimeStr,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            LocalDateTime appointmentTime = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
             System.out.println("\nAppointment Types:");
             System.out.println("1. Online Consultation ($50)");
@@ -136,16 +135,12 @@ public class Main {
                     type = AppointmentFactory.AppointmentType.IN_PERSON;
             }
 
-            Result<Appointment> result = enhancedService.bookAppointmentWithType(
-                    patientId, doctorId, appointmentTime, type
-            );
+            Result<Appointment> result = enhancedService.bookAppointmentWithType(patientId, doctorId, appointmentTime, type);
 
             if (result.isSuccess()) {
-                System.out.println("Appointment booked successfully! ID: " +
-                        result.getData().getId());
+                System.out.println("Appointment booked successfully! ID: " + result.getData().getId());
             } else {
-                System.out.println("Failed to book appointment: " +
-                        result.getErrorMessage());
+                System.out.println("Failed to book appointment: " + result.getErrorMessage());
             }
 
         } catch (Exception e) {
@@ -182,7 +177,8 @@ public class Main {
             } else {
                 System.out.println("\nDoctor's Schedule:");
                 for (Appointment appointment : schedule) {
-                    System.out.printf("ID: %d | Patient: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
+                    System.out.printf(
+                            "ID: %d | Patient: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
                             appointment.getId(),
                             appointment.getPatientId(),
                             appointment.getAppointmentTime(),
@@ -212,7 +208,8 @@ public class Main {
             } else {
                 System.out.println("\nUpcoming Appointments:");
                 for (Appointment appointment : upcoming) {
-                    System.out.printf("ID: %d | Doctor: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
+                    System.out.printf(
+                            "ID: %d | Doctor: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
                             appointment.getId(),
                             appointment.getDoctorId(),
                             appointment.getAppointmentTime(),
@@ -237,8 +234,7 @@ public class Main {
             System.out.print("Enter appointment ID: ");
             int appointmentId = Integer.parseInt(scanner.nextLine());
 
-            Optional<AppointmentSummary> summary =
-                    enhancedService.generateAppointmentSummary(appointmentId);
+            Optional<AppointmentSummary> summary = enhancedService.generateAppointmentSummary(appointmentId);
 
             if (summary.isPresent()) {
                 System.out.println("\n=== Appointment Summary ===");

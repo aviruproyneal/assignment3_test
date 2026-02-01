@@ -60,21 +60,15 @@ public class AppointmentService {
     }
 
     public List<Appointment> filterAppointments(Predicate<Appointment> filterCondition) {
-        return appointmentRepository.findAll().stream()
-                .filter(filterCondition)
-                .collect(Collectors.toList());
+        return appointmentRepository.findAll().stream().filter(filterCondition).collect(Collectors.toList());
     }
 
     public List<Appointment> getAppointmentsSorted(Comparator<Appointment> sorter) {
-        return appointmentRepository.findAll().stream()
-                .sorted(sorter)
-                .collect(Collectors.toList());
+        return appointmentRepository.findAll().stream().sorted(sorter).collect(Collectors.toList());
     }
 
     public List<Appointment> findAppointmentsWithCondition(Predicate<Appointment> condition) {
-        return appointmentRepository.findAll().stream()
-                .filter(condition)
-                .collect(Collectors.toList());
+        return appointmentRepository.findAll().stream().filter(condition).collect(Collectors.toList());
     }
 
     public List<Appointment> getHighPriorityAppointments() {
@@ -89,6 +83,11 @@ public class AppointmentService {
     }
 
     private void validateAppointment(int doctorId, LocalDateTime time) {
+        ClinicConfig clinicConfig = ClinicConfig.getInstance();
+        if (!clinicConfig.isWithinWorkingHours(time.toLocalTime())) {
+            throw new RuntimeException(String.format("Clinic is closed at %s. Working hours: %s", time.toLocalTime(), clinicConfig.getWorkingHoursString()));
+        }
+
         doctorAvailabilityService.checkDoctorAvailability(doctorId);
         if (appointmentRepository.isTimeSlotBooked(doctorId, time)) {
             throw new AppointmentConflictException("Time slot " + time + " is already booked");

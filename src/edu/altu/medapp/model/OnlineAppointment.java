@@ -6,14 +6,7 @@ import java.time.LocalDateTime;
 public class OnlineAppointment implements IAppointmentType {
     @Override
     public Appointment createAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        return new Appointment(
-                patientId,
-                doctorId,
-                appointmentTime,
-                "scheduled",
-                Appointment.TYPE_ONLINE,
-                getBaseFee()
-        );
+        return new Appointment(patientId, doctorId, appointmentTime, "scheduled", Appointment.TYPE_ONLINE, getBaseFee());
     }
 
     @Override

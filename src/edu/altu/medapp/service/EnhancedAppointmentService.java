@@ -24,9 +24,7 @@ public class EnhancedAppointmentService {
         this.clinicConfig = ClinicConfig.getInstance();
     }
 
-    public Result<Appointment> bookAppointmentWithType(
-            int patientId, int doctorId, LocalDateTime appointmentTime,
-            AppointmentFactory.AppointmentType appointmentType) {
+    public Result<Appointment> bookAppointmentWithType(int patientId, int doctorId, LocalDateTime appointmentTime, AppointmentFactory.AppointmentType appointmentType) {
 
         try {
             if (!clinicConfig.isWithinWorkingHours(appointmentTime.toLocalTime())) {

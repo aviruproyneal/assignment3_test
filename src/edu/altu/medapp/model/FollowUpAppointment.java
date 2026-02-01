@@ -6,14 +6,7 @@ import java.time.LocalDateTime;
 public class FollowUpAppointment implements IAppointmentType {
     @Override
     public Appointment createAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        return new Appointment(
-                patientId,
-                doctorId,
-                appointmentTime,
-                "scheduled",
-                Appointment.TYPE_FOLLOW_UP,
-                getBaseFee()
-        );
+        return new Appointment(patientId, doctorId, appointmentTime, "scheduled", Appointment.TYPE_FOLLOW_UP, getBaseFee());
     }
 
     @Override

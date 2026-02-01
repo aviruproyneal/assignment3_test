@@ -6,9 +6,14 @@ import java.time.LocalDateTime;
 public class FollowUpAppointment implements IAppointmentType {
     @Override
     public Appointment createAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, "scheduled");
-        // Follow-up might link to previous appointment in future
-        return appointment;
+        return new Appointment(
+                patientId,
+                doctorId,
+                appointmentTime,
+                "scheduled",
+                Appointment.TYPE_FOLLOW_UP,
+                getBaseFee()
+        );
     }
 
     @Override
@@ -18,7 +23,7 @@ public class FollowUpAppointment implements IAppointmentType {
 
     @Override
     public double getBaseFee() {
-        return 75.0; // Discounted for follow-ups
+        return 75.0;
     }
 
     @Override

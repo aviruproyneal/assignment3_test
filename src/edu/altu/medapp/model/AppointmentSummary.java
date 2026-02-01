@@ -21,7 +21,6 @@ public class AppointmentSummary {
         this.consultationFee = builder.consultationFee;
     }
 
-    // Getters
     public int getAppointmentId() { return appointmentId; }
     public String getPatientName() { return patientName; }
     public String getDoctorName() { return doctorName; }
@@ -39,7 +38,6 @@ public class AppointmentSummary {
         );
     }
 
-    // Builder Class
     public static class Builder {
         private int appointmentId;
         private String patientName;

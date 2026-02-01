@@ -5,8 +5,8 @@ import java.util.Optional;
 
 public interface IRepository<T> {
     void save(T entity);
-    Optional<T> findById(int id);    // Primitive int
+    Optional<T> findById(int id);
     List<T> findAll();
     void update(T entity);
-    void delete(int id);             // Primitive int
+    void delete(int id);
 }

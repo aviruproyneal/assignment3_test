@@ -24,18 +24,24 @@ public class AppointmentRepository implements IAppointmentRepository {
         Timestamp timestamp = rs.getTimestamp("appointment_time");
         if (timestamp != null) appointment.setAppointmentTime(timestamp.toLocalDateTime());
         appointment.setStatus(rs.getString("status"));
+
+        appointment.setAppointmentType(rs.getString("appointment_type"));
+        appointment.setConsultationFee(rs.getDouble("consultation_fee"));
+
         return appointment;
     }
 
     @Override
     public void save(Appointment appointment) {
-        String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_time, status) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_time, status, appointment_type, consultation_fee) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, appointment.getPatientId());
             pstmt.setInt(2, appointment.getDoctorId());
             pstmt.setTimestamp(3, Timestamp.valueOf(appointment.getAppointmentTime()));
             pstmt.setString(4, appointment.getStatus());
+            pstmt.setString(5, appointment.getAppointmentType());
+            pstmt.setDouble(6, appointment.getConsultationFee());
             pstmt.executeUpdate();
             try (ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) appointment.setId(rs.getInt(1));
@@ -133,21 +139,23 @@ public class AppointmentRepository implements IAppointmentRepository {
 
     @Override
     public void update(Appointment appointment) {
-        String sql = "UPDATE appointments SET patient_id = ?, doctor_id = ?, appointment_time = ?, status = ? WHERE id = ?";
+        String sql = "UPDATE appointments SET patient_id = ?, doctor_id = ?, appointment_time = ?, status = ?, appointment_type = ?, consultation_fee = ? WHERE id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, appointment.getPatientId());
             pstmt.setInt(2, appointment.getDoctorId());
             pstmt.setTimestamp(3, Timestamp.valueOf(appointment.getAppointmentTime()));
             pstmt.setString(4, appointment.getStatus());
-            pstmt.setInt(5, appointment.getId());
+            pstmt.setString(5, appointment.getAppointmentType());
+            pstmt.setDouble(6, appointment.getConsultationFee());
+            pstmt.setInt(7, appointment.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error updating appointment", e);
         }
     }
 
-    @Override  // ← ADD THIS LINE
+    @Override
     public void delete(int id) {
         String sql = "DELETE FROM appointments WHERE id = ?";
         try (Connection conn = getConnection();

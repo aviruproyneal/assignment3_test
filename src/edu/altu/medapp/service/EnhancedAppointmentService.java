@@ -1,16 +1,17 @@
-package edu.altu.medapp.service;  // Make sure this is correct
+package edu.altu.medapp.service;
 
-// ADD THESE IMPORTS:
 import edu.altu.medapp.interfaces.IAppointmentType;
 import edu.altu.medapp.model.*;
 import edu.altu.medapp.repository.AppointmentRepository;
 import edu.altu.medapp.service.exceptions.AppointmentConflictException;
 import edu.altu.medapp.service.exceptions.DoctorUnavailableException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EnhancedAppointmentService {
     private final AppointmentRepository appointmentRepository;
@@ -23,13 +24,11 @@ public class EnhancedAppointmentService {
         this.clinicConfig = ClinicConfig.getInstance();
     }
 
-    // Use Factory Pattern for different appointment types
     public Result<Appointment> bookAppointmentWithType(
             int patientId, int doctorId, LocalDateTime appointmentTime,
             AppointmentFactory.AppointmentType appointmentType) {
 
         try {
-            // Validate using Singleton configuration
             if (!clinicConfig.isWithinWorkingHours(appointmentTime.toLocalTime())) {
                 return Result.failure(
                         String.format("Clinic is closed at %s. Working hours: %s",
@@ -43,13 +42,15 @@ public class EnhancedAppointmentService {
                 throw new AppointmentConflictException("Time slot already booked");
             }
 
-            // Use Factory to create appropriate appointment type
+            IAppointmentType appointmentTypeObj = AppointmentFactory.createAppointmentType(appointmentType);
+            String typeName = appointmentTypeObj.getType();
+            double fee = appointmentTypeObj.getBaseFee();
+
+            System.out.println("Booking " + typeName + " | Fee: $" + fee);
+
             Appointment appointment = AppointmentFactory.createAppointment(
                     appointmentType, patientId, doctorId, appointmentTime
             );
-
-            IAppointmentType type = AppointmentFactory.createAppointmentType(appointmentType);
-            System.out.println("Booking " + type.getType() + " | Fee: $" + type.getBaseFee());
 
             appointmentRepository.save(appointment);
             return Result.success(appointment);
@@ -59,39 +60,42 @@ public class EnhancedAppointmentService {
         }
     }
 
-    // Use Builder Pattern for appointment summary
     public Optional<AppointmentSummary> generateAppointmentSummary(int appointmentId) {
         return appointmentRepository.findById(appointmentId).map(appointment -> {
-            // In real scenario, you would fetch patient and doctor names from repositories
+            String typeDisplay = "In-Person Visit"; // Default
+            if (Appointment.TYPE_ONLINE.equals(appointment.getAppointmentType())) {
+                typeDisplay = "Online Consultation";
+            } else if (Appointment.TYPE_FOLLOW_UP.equals(appointment.getAppointmentType())) {
+                typeDisplay = "Follow-Up";
+            }
+
             return new AppointmentSummary.Builder(
                     appointment.getId(),
-                    "Patient #" + appointment.getPatientId(),  // Would be real name
-                    "Doctor #" + appointment.getDoctorId(),    // Would be real name
+                    "Patient #" + appointment.getPatientId(),
+                    "Doctor #" + appointment.getDoctorId(),
                     appointment.getAppointmentTime(),
                     appointment.getStatus()
             )
-                    .summaryNotes("Regular checkup")
-                    .consultationFee(100.0)
+                    .summaryNotes(typeDisplay + " appointment")
+                    .consultationFee(appointment.getConsultationFee())
                     .build();
         });
     }
 
-    // Use Lambda for filtering
     public List<Appointment> findAppointments(Predicate<Appointment> filter) {
         return appointmentRepository.findAll().stream()
                 .filter(filter)
-                .toList();
+                .collect(Collectors.toList());
     }
 
-    // Example lambda usage
     public List<Appointment> getTodayAppointments() {
-        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0);
-        LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59);
+        LocalDate today = LocalDate.now();
 
-        return findAppointments(appt ->
-                appt.getAppointmentTime().isAfter(startOfDay) &&
-                        appt.getAppointmentTime().isBefore(endOfDay) &&
-                        appt.getStatus().equals("scheduled")
-        );
+        return appointmentRepository.findAll().stream()
+                .filter(appt ->
+                        appt.getAppointmentTime().toLocalDate().equals(today) &&
+                                Appointment.STATUS_SCHEDULED.equals(appt.getStatus())
+                )
+                .collect(Collectors.toList());
     }
 }

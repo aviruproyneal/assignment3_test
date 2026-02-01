@@ -101,7 +101,7 @@ public class PatientRepository implements IPatientRepository {
         }
     }
 
-    @Override  // ← ADD THIS LINE
+    @Override
     public void delete(int id) {
         String sql = "DELETE FROM patients WHERE id = ?";
         try (Connection conn = getConnection();

@@ -23,7 +23,6 @@ public class Result<T> {
         return new Result<>(false, partialData, errorMessage);
     }
 
-    // Getters
     public boolean isSuccess() { return success; }
     public T getData() { return data; }
     public String getErrorMessage() { return errorMessage; }

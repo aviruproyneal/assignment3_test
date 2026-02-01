@@ -7,9 +7,8 @@ import edu.altu.medapp.service.exceptions.AppointmentNotFoundException;
 import edu.altu.medapp.service.exceptions.DoctorUnavailableException;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -24,14 +23,16 @@ public class AppointmentService {
 
     public Appointment bookAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
         validateAppointment(doctorId, appointmentTime);
-        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, "scheduled");
+
+        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, Appointment.STATUS_SCHEDULED);
+
         appointmentRepository.save(appointment);
         return appointment;
     }
 
     public void cancelAppointment(int appointmentId) {
         Appointment appointment = findAppointment(appointmentId);
-        appointment.setStatus("cancelled");
+        appointment.setStatus(Appointment.STATUS_CANCELLED);
         appointmentRepository.update(appointment);
     }
 
@@ -58,19 +59,6 @@ public class AppointmentService {
         appointmentRepository.update(appointment);
     }
 
-    private void validateAppointment(int doctorId, LocalDateTime time) {
-        doctorAvailabilityService.checkDoctorAvailability(doctorId);
-        if (appointmentRepository.isTimeSlotBooked(doctorId, time)) {
-            throw new AppointmentConflictException("Time slot " + time + " is already booked");
-        }
-    }
-
-    private Appointment findAppointment(int appointmentId) {
-        return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
-    }
-
-
     public List<Appointment> filterAppointments(Predicate<Appointment> filterCondition) {
         return appointmentRepository.findAll().stream()
                 .filter(filterCondition)
@@ -91,12 +79,24 @@ public class AppointmentService {
 
     public List<Appointment> getHighPriorityAppointments() {
         return filterAppointments(appt ->
-                appt.getAppointmentTime().isBefore(java.time.LocalDateTime.now().plusDays(1)) &&
-                        appt.getStatus().equals("scheduled")
+                appt.getAppointmentTime().isBefore(LocalDateTime.now().plusDays(1)) &&
+                        appt.getStatus().equals(Appointment.STATUS_SCHEDULED)
         );
     }
 
     public List<Appointment> getAppointmentsSortedByTime() {
         return getAppointmentsSorted(Comparator.comparing(Appointment::getAppointmentTime));
+    }
+
+    private void validateAppointment(int doctorId, LocalDateTime time) {
+        doctorAvailabilityService.checkDoctorAvailability(doctorId);
+        if (appointmentRepository.isTimeSlotBooked(doctorId, time)) {
+            throw new AppointmentConflictException("Time slot " + time + " is already booked");
+        }
+    }
+
+    private Appointment findAppointment(int appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
     }
 }

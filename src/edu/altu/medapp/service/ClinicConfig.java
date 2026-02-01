@@ -11,9 +11,8 @@ public class ClinicConfig {
     private final int appointmentDurationMinutes;
 
     private ClinicConfig() {
-        // Default clinic configuration
-        this.openingTime = LocalTime.of(9, 0);     // 9:00 AM
-        this.closingTime = LocalTime.of(17, 0);    // 5:00 PM
+        this.openingTime = LocalTime.of(9, 0);
+        this.closingTime = LocalTime.of(17, 0);
         this.maxAppointmentsPerDay = 20;
         this.appointmentDurationMinutes = 30;
     }
@@ -25,13 +24,11 @@ public class ClinicConfig {
         return instance;
     }
 
-    // Getters
     public LocalTime getOpeningTime() { return openingTime; }
     public LocalTime getClosingTime() { return closingTime; }
     public int getMaxAppointmentsPerDay() { return maxAppointmentsPerDay; }
     public int getAppointmentDurationMinutes() { return appointmentDurationMinutes; }
 
-    // Business methods
     public boolean isWithinWorkingHours(LocalTime time) {
         return !time.isBefore(openingTime) && !time.isAfter(closingTime);
     }

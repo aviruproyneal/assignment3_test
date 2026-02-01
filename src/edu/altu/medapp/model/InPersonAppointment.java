@@ -6,9 +6,14 @@ import java.time.LocalDateTime;
 public class InPersonAppointment implements IAppointmentType {
     @Override
     public Appointment createAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, "scheduled");
-        // In-person might require physical room assignment in future
-        return appointment;
+        return new Appointment(
+                patientId,
+                doctorId,
+                appointmentTime,
+                "scheduled",
+                Appointment.TYPE_IN_PERSON,
+                getBaseFee()
+        );
     }
 
     @Override
@@ -18,7 +23,7 @@ public class InPersonAppointment implements IAppointmentType {
 
     @Override
     public double getBaseFee() {
-        return 100.0; // Standard fee for in-person
+        return 100.0;
     }
 
     @Override

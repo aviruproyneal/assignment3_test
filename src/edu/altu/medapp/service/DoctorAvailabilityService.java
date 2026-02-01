@@ -22,8 +22,7 @@ public class DoctorAvailabilityService {
     }
 
     public void checkDoctorAvailability(int doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new DoctorUnavailableException("Doctor not found with ID: " + doctorId));
+        Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(() -> new DoctorUnavailableException("Doctor not found with ID: " + doctorId));
 
         if (!doctor.isAvailable()) {
             throw new DoctorUnavailableException("Doctor " + doctor.getName() + " is currently unavailable");
@@ -31,8 +30,7 @@ public class DoctorAvailabilityService {
     }
 
     public void updateDoctorAvailability(int doctorId, boolean isAvailable) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new DoctorUnavailableException("Doctor not found with ID: " + doctorId));
+        Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(() -> new DoctorUnavailableException("Doctor not found with ID: " + doctorId));
 
         doctor.setAvailable(isAvailable);
         doctorRepository.update(doctor);

@@ -1,101 +1,111 @@
 package edu.altu.medapp.service;
 
+import edu.altu.medapp.exceptions.AppointmentConflictException;
+import edu.altu.medapp.exceptions.AppointmentNotFoundException;
+import edu.altu.medapp.exceptions.DoctorUnavailableException;
 import edu.altu.medapp.model.Appointment;
+import edu.altu.medapp.model.AppointmentSummary;
+import edu.altu.medapp.model.Doctor;
 import edu.altu.medapp.repository.AppointmentRepository;
-import edu.altu.medapp.service.exceptions.AppointmentConflictException;
-import edu.altu.medapp.service.exceptions.AppointmentNotFoundException;
-import edu.altu.medapp.service.exceptions.DoctorUnavailableException;
+import edu.altu.medapp.repository.DoctorRepository;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class AppointmentService {
-    private final AppointmentRepository appointmentRepository;
-    private final DoctorAvailabilityService doctorAvailabilityService;
+    private final AppointmentRepository appointmentRepo;
+    private final DoctorRepository doctorRepo;
 
     public AppointmentService() {
-        this.appointmentRepository = new AppointmentRepository();
-        this.doctorAvailabilityService = new DoctorAvailabilityService();
+        this.appointmentRepo = new AppointmentRepository();
+        this.doctorRepo = new DoctorRepository();
     }
 
-    public Appointment bookAppointment(int patientId, int doctorId, LocalDateTime appointmentTime) {
-        validateAppointment(doctorId, appointmentTime);
+    public Appointment book(int patientId, int doctorId, LocalDateTime time, String type) {
+        checkTime(time);
+        checkDoctor(doctorId);
+        checkSlot(doctorId, time);
 
-        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, Appointment.STATUS_SCHEDULED);
-
-        appointmentRepository.save(appointment);
+        Appointment appointment = AppointmentFactory.create(type, patientId, doctorId, time);
+        appointmentRepo.save(appointment);
         return appointment;
     }
 
-    public void cancelAppointment(int appointmentId) {
-        Appointment appointment = findAppointment(appointmentId);
-        appointment.setStatus(Appointment.STATUS_CANCELLED);
-        appointmentRepository.update(appointment);
+    public void cancel(int id) {
+        try {
+            Appointment appointment = appointmentRepo.findById(id);
+            appointment.setStatus("cancelled");
+            appointmentRepo.update(appointment);
+        } catch (RuntimeException e) {
+            throw new AppointmentNotFoundException("Appointment " + id + " not found");
+        }
+    }
+
+    public Result<AppointmentSummary> getSummary(int appointmentId) {
+        try {
+            Appointment appointment = appointmentRepo.findById(appointmentId);
+            AppointmentSummary summary = new AppointmentSummary.Builder()
+                    .appointment(appointment)
+                    .build();
+            return Result.success(summary);
+        } catch (Exception e) {
+            return Result.failure("Could not generate summary: " + e.getMessage());
+        }
     }
 
     public List<Appointment> getDoctorSchedule(int doctorId) {
-        return appointmentRepository.findByDoctorId(doctorId);
+        return appointmentRepo.findByDoctorId(doctorId);
     }
 
-    public List<Appointment> getPatientUpcomingAppointments(int patientId) {
-        return appointmentRepository.findUpcomingAppointments(patientId);
+    public List<Appointment> getUpcoming(int patientId) {
+        LocalDateTime now = LocalDateTime.now();
+        Predicate<Appointment> upcoming = appt ->
+                appt.getTime().isAfter(now) && appt.getStatus().equals("scheduled");
+
+        return appointmentRepo.findAll().stream()
+                .filter(appt -> appt.getPatientId() == patientId)
+                .filter(upcoming)
+                .collect(Collectors.toList());
     }
 
-    public Appointment getAppointmentById(int appointmentId) {
-        return findAppointment(appointmentId);
+    public List<Appointment> getToday() {
+        LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+
+        Predicate<Appointment> today = appt ->
+                appt.getTime().isAfter(todayStart) &&
+                        appt.getTime().isBefore(todayEnd) &&
+                        "scheduled".equals(appt.getStatus());
+
+        return appointmentRepo.findAll().stream()
+                .filter(today)
+                .collect(Collectors.toList());
     }
 
-    public List<Appointment> getAllAppointments() {
-        return appointmentRepository.findAll();
-    }
-
-    public void rescheduleAppointment(int appointmentId, LocalDateTime newTime) {
-        Appointment appointment = findAppointment(appointmentId);
-        validateAppointment(appointment.getDoctorId(), newTime);
-        appointment.setAppointmentTime(newTime);
-        appointmentRepository.update(appointment);
-    }
-
-    public List<Appointment> filterAppointments(Predicate<Appointment> filterCondition) {
-        return appointmentRepository.findAll().stream().filter(filterCondition).collect(Collectors.toList());
-    }
-
-    public List<Appointment> getAppointmentsSorted(Comparator<Appointment> sorter) {
-        return appointmentRepository.findAll().stream().sorted(sorter).collect(Collectors.toList());
-    }
-
-    public List<Appointment> findAppointmentsWithCondition(Predicate<Appointment> condition) {
-        return appointmentRepository.findAll().stream().filter(condition).collect(Collectors.toList());
-    }
-
-    public List<Appointment> getHighPriorityAppointments() {
-        return filterAppointments(appt ->
-                appt.getAppointmentTime().isBefore(LocalDateTime.now().plusDays(1)) &&
-                        appt.getStatus().equals(Appointment.STATUS_SCHEDULED)
-        );
-    }
-
-    public List<Appointment> getAppointmentsSortedByTime() {
-        return getAppointmentsSorted(Comparator.comparing(Appointment::getAppointmentTime));
-    }
-
-    private void validateAppointment(int doctorId, LocalDateTime time) {
-        ClinicConfig clinicConfig = ClinicConfig.getInstance();
-        if (!clinicConfig.isWithinWorkingHours(time.toLocalTime())) {
-            throw new RuntimeException(String.format("Clinic is closed at %s. Working hours: %s", time.toLocalTime(), clinicConfig.getWorkingHoursString()));
-        }
-
-        doctorAvailabilityService.checkDoctorAvailability(doctorId);
-        if (appointmentRepository.isTimeSlotBooked(doctorId, time)) {
-            throw new AppointmentConflictException("Time slot " + time + " is already booked");
+    private void checkTime(LocalDateTime time) {
+        ClinicConfig config = ClinicConfig.getInstance();
+        if (!config.isOpen(time.toLocalTime())) {
+            throw new RuntimeException("Clinic closed at " + time.toLocalTime());
         }
     }
 
-    private Appointment findAppointment(int appointmentId) {
-        return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with ID: " + appointmentId));
+    private void checkDoctor(int doctorId) {
+        try {
+            Doctor doctor = doctorRepo.findById(doctorId);
+            if (!doctor.isAvailable()) {
+                throw new DoctorUnavailableException("Doctor " + doctor.getName() + " unavailable");
+            }
+        } catch (RuntimeException e) {
+            throw new DoctorUnavailableException("Doctor " + doctorId + " not found");
+        }
+    }
+
+    private void checkSlot(int doctorId, LocalDateTime time) {
+        if (appointmentRepo.isTimeSlotTaken(doctorId, time)) {
+            throw new AppointmentConflictException("Time slot taken: " + time);
+        }
     }
 }

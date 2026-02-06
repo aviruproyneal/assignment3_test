@@ -5,35 +5,23 @@ import java.time.LocalTime;
 public class ClinicConfig {
     private static ClinicConfig instance;
 
-    private final LocalTime openingTime;
-    private final LocalTime closingTime;
-    private final int maxAppointmentsPerDay;
-    private final int appointmentDurationMinutes;
+    private final LocalTime open = LocalTime.of(9, 0);
+    private final LocalTime close = LocalTime.of(17, 0);
 
-    private ClinicConfig() {
-        this.openingTime = LocalTime.of(9, 0);
-        this.closingTime = LocalTime.of(17, 0);
-        this.maxAppointmentsPerDay = 20;
-        this.appointmentDurationMinutes = 30;
-    }
+    private ClinicConfig() {}
 
-    public static synchronized ClinicConfig getInstance() {
+    public static ClinicConfig getInstance() {
         if (instance == null) {
             instance = new ClinicConfig();
         }
         return instance;
     }
 
-    public LocalTime getOpeningTime() { return openingTime; }
-    public LocalTime getClosingTime() { return closingTime; }
-    public int getMaxAppointmentsPerDay() { return maxAppointmentsPerDay; }
-    public int getAppointmentDurationMinutes() { return appointmentDurationMinutes; }
-
-    public boolean isWithinWorkingHours(LocalTime time) {
-        return !time.isBefore(openingTime) && !time.isAfter(closingTime);
+    public boolean isOpen(LocalTime time) {
+        return !time.isBefore(open) && !time.isAfter(close);
     }
 
-    public String getWorkingHoursString() {
-        return String.format("%s - %s", openingTime, closingTime);
+    public String getHours() {
+        return open + " to " + close;
     }
 }

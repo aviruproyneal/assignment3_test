@@ -1,192 +1,132 @@
 package edu.altu.medapp;
 
 import edu.altu.medapp.model.Appointment;
-import edu.altu.medapp.model.Doctor;
 import edu.altu.medapp.model.AppointmentSummary;
-import edu.altu.medapp.service.*;
+import edu.altu.medapp.service.AppointmentService;
+import edu.altu.medapp.service.ClinicConfig;
+import edu.altu.medapp.service.Result;
+
+import edu.altu.medapp.components.SchedulingComponent;
+import edu.altu.medapp.components.PatientRecordsComponent;
+import edu.altu.medapp.components.DoctorManagementComponent;
+import edu.altu.medapp.components.BillingComponent;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+
+        SchedulingComponent scheduling = new SchedulingComponent();
+        PatientRecordsComponent patients = new PatientRecordsComponent();
+        DoctorManagementComponent doctors = new DoctorManagementComponent();
+        BillingComponent billing = new BillingComponent();
         AppointmentService appointmentService = new AppointmentService();
-        DoctorAvailabilityService availabilityService = new DoctorAvailabilityService();
 
         System.out.println("=== Medical Appointment System ===\n");
 
         while (true) {
-            System.out.println("\n1. Book Appointment");
-            System.out.println("2. Book Appointment with Type");
-            System.out.println("3. Cancel Appointment");
-            System.out.println("4. View Doctor's Schedule");
-            System.out.println("5. View Patient's Upcoming Visits");
-            System.out.println("6. Generate Appointment Summary");
-            System.out.println("7. View Today's Appointments");
-            System.out.println("8. Clinic Information");
-            System.out.println("9. Exit");
-            System.out.print("Choose option: ");
+            System.out.println("1. Book Appointment");
+            System.out.println("2. View Schedule");
+            System.out.println("3. View Patient Appointments");
+            System.out.println("4. Cancel Appointment");
+            System.out.println("5. View Available Doctors");
+            System.out.println("6. Clinic Info");
+            System.out.println("7. Today's Appointments");
+            System.out.println("8. Revenue");
+            System.out.println("9. View Appointment Summary");
+            System.out.println("10. Exit");
+            System.out.print("Choice: ");
 
             String choice = scanner.nextLine();
 
             switch (choice) {
                 case "1":
-                    bookAppointment(scanner, appointmentService, availabilityService);
+                    handleBookAppointment(scanner, scheduling);
                     break;
                 case "2":
-                    bookAppointmentWithType(scanner);
+                    handleViewSchedule(scanner, scheduling);
                     break;
                 case "3":
-                    cancelAppointment(scanner, appointmentService);
+                    handlePatientAppointments(scanner, patients);
                     break;
                 case "4":
-                    viewDoctorSchedule(scanner, appointmentService);
+                    handleCancelAppointment(scanner, scheduling);
                     break;
                 case "5":
-                    viewPatientUpcomingVisits(scanner, appointmentService);
+                    handleAvailableDoctors(doctors);
                     break;
                 case "6":
-                    generateAppointmentSummary(scanner);
+                    handleClinicInfo();
                     break;
                 case "7":
-                    viewTodayAppointments();
+                    handleTodayAppointments(scheduling);
                     break;
                 case "8":
-                    showClinicInfo();
+                    handleRevenue(billing);
                     break;
                 case "9":
+                    viewAppointmentSummary(scanner, appointmentService);
+                    break;
+                case "10":
                     System.out.println("Goodbye!");
                     scanner.close();
                     return;
                 default:
-                    System.out.println("Invalid option");
+                    System.out.println("Invalid choice");
             }
         }
     }
 
-    private static void bookAppointment(Scanner scanner, AppointmentService appointmentService, DoctorAvailabilityService availabilityService) {
-        System.out.println("\n--- Book Appointment ---");
-
+    private static void handleBookAppointment(Scanner scanner, SchedulingComponent scheduling) {
         try {
-            System.out.print("Enter patient ID: ");
+            System.out.print("Patient ID: ");
             int patientId = Integer.parseInt(scanner.nextLine());
 
-            System.out.println("Available Doctors:");
-            List<Doctor> availableDoctors = availabilityService.getAvailableDoctors();
-            if (availableDoctors.isEmpty()) {
-                System.out.println("No available doctors");
-                return;
-            }
-
-            for (Doctor doctor : availableDoctors) {
-                System.out.println("ID: " + doctor.getId() + " - " + doctor.getName() + " (" + doctor.getSpecialization() + ")");
-            }
-
-            System.out.print("Enter doctor ID: ");
+            System.out.print("Doctor ID: ");
             int doctorId = Integer.parseInt(scanner.nextLine());
 
-            System.out.print("Enter date and time (YYYY-MM-DD HH:MM): ");
+            System.out.print("Date and Time (YYYY-MM-DD HH:MM): ");
             String dateTimeStr = scanner.nextLine();
-            LocalDateTime appointmentTime = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            LocalDateTime time = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
-            Appointment appointment = appointmentService.bookAppointment(patientId, doctorId, appointmentTime);
-            System.out.println("Appointment booked successfully! ID: " + appointment.getId());
-            System.out.println("Note: This is an In-Person appointment with default $100 fee");
+            System.out.println("Types: 1.Online 2.In-Person 3.Follow-Up");
+            System.out.print("Type (1-3): ");
+            String typeChoice = scanner.nextLine();
 
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private static void bookAppointmentWithType(Scanner scanner) {
-        System.out.println("\n--- Book Appointment with Type ---");
-
-        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
-
-        try {
-            System.out.print("Enter patient ID: ");
-            int patientId = Integer.parseInt(scanner.nextLine());
-
-            System.out.print("Enter doctor ID: ");
-            int doctorId = Integer.parseInt(scanner.nextLine());
-
-            System.out.print("Enter date and time (YYYY-MM-DD HH:MM): ");
-            String dateTimeStr = scanner.nextLine();
-            LocalDateTime appointmentTime = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-
-            System.out.println("\nAppointment Types:");
-            System.out.println("1. Online Consultation ($50)");
-            System.out.println("2. In-Person Visit ($100)");
-            System.out.println("3. Follow-Up ($75)");
-            System.out.print("Choose type (1-3): ");
-
-            int typeChoice = Integer.parseInt(scanner.nextLine());
-            AppointmentFactory.AppointmentType type;
-
+            String type;
             switch (typeChoice) {
-                case 1: type = AppointmentFactory.AppointmentType.ONLINE; break;
-                case 2: type = AppointmentFactory.AppointmentType.IN_PERSON; break;
-                case 3: type = AppointmentFactory.AppointmentType.FOLLOW_UP; break;
-                default:
-                    System.out.println("Invalid type, defaulting to In-Person");
-                    type = AppointmentFactory.AppointmentType.IN_PERSON;
+                case "1": type = "ONLINE"; break;
+                case "2": type = "IN_PERSON"; break;
+                case "3": type = "FOLLOW_UP"; break;
+                default: type = "IN_PERSON";
             }
 
-            Result<Appointment> result = enhancedService.bookAppointmentWithType(patientId, doctorId, appointmentTime, type);
-
-            if (result.isSuccess()) {
-                System.out.println("Appointment booked successfully! ID: " + result.getData().getId());
-            } else {
-                System.out.println("Failed to book appointment: " + result.getErrorMessage());
-            }
+            Appointment appointment = scheduling.bookAppointment(patientId, doctorId, time, type);
+            System.out.println("Booked! ID: " + appointment.getId());
 
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-    private static void cancelAppointment(Scanner scanner, AppointmentService appointmentService) {
-        System.out.println("\n--- Cancel Appointment ---");
-
+    private static void handleViewSchedule(Scanner scanner, SchedulingComponent scheduling) {
         try {
-            System.out.print("Enter appointment ID to cancel: ");
-            int appointmentId = Integer.parseInt(scanner.nextLine());
-
-            appointmentService.cancelAppointment(appointmentId);
-            System.out.println("Appointment cancelled successfully");
-
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private static void viewDoctorSchedule(Scanner scanner, AppointmentService appointmentService) {
-        System.out.println("\n--- View Doctor's Schedule ---");
-
-        try {
-            System.out.print("Enter doctor ID: ");
+            System.out.print("Doctor ID: ");
             int doctorId = Integer.parseInt(scanner.nextLine());
 
-            List<Appointment> schedule = appointmentService.getDoctorSchedule(doctorId);
+            var schedule = scheduling.getSchedule(doctorId);
 
             if (schedule.isEmpty()) {
-                System.out.println("No appointments found");
+                System.out.println("No appointments");
             } else {
-                System.out.println("\nDoctor's Schedule:");
-                for (Appointment appointment : schedule) {
-                    System.out.printf(
-                            "ID: %d | Patient: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
-                            appointment.getId(),
-                            appointment.getPatientId(),
-                            appointment.getAppointmentTime(),
-                            appointment.getStatus(),
-                            appointment.getAppointmentType(),
-                            appointment.getConsultationFee());
+                System.out.println("Doctor's Schedule:");
+                for (Appointment appt : schedule) {
+                    System.out.printf("ID: %d | Time: %s | Type: %s | Fee: $%.2f%n",
+                            appt.getId(), appt.getTime(), appt.getType(), appt.getFee());
                 }
-                System.out.println("Total appointments: " + schedule.size());
             }
 
         } catch (Exception e) {
@@ -194,30 +134,21 @@ public class Main {
         }
     }
 
-    private static void viewPatientUpcomingVisits(Scanner scanner, AppointmentService appointmentService) {
-        System.out.println("\n--- View Patient's Upcoming Visits ---");
-
+    private static void handlePatientAppointments(Scanner scanner, PatientRecordsComponent patients) {
         try {
-            System.out.print("Enter patient ID: ");
+            System.out.print("Patient ID: ");
             int patientId = Integer.parseInt(scanner.nextLine());
 
-            List<Appointment> upcoming = appointmentService.getPatientUpcomingAppointments(patientId);
+            var appointments = patients.getAppointments(patientId);
 
-            if (upcoming.isEmpty()) {
-                System.out.println("No upcoming appointments");
+            if (appointments.isEmpty()) {
+                System.out.println("No appointments");
             } else {
-                System.out.println("\nUpcoming Appointments:");
-                for (Appointment appointment : upcoming) {
-                    System.out.printf(
-                            "ID: %d | Doctor: %d | Time: %s | Status: %s | Type: %s | Fee: $%.2f%n",
-                            appointment.getId(),
-                            appointment.getDoctorId(),
-                            appointment.getAppointmentTime(),
-                            appointment.getStatus(),
-                            appointment.getAppointmentType(),
-                            appointment.getConsultationFee());
+                System.out.println("Upcoming Appointments:");
+                for (Appointment appt : appointments) {
+                    System.out.printf("ID: %d | Doctor: %d | Time: %s | Type: %s%n",
+                            appt.getId(), appt.getDoctorId(), appt.getTime(), appt.getType());
                 }
-                System.out.println("Total upcoming: " + upcoming.size());
             }
 
         } catch (Exception e) {
@@ -225,61 +156,80 @@ public class Main {
         }
     }
 
-    private static void generateAppointmentSummary(Scanner scanner) {
-        System.out.println("\n--- Generate Appointment Summary ---");
+    private static void handleCancelAppointment(Scanner scanner, SchedulingComponent scheduling) {
+        try {
+            System.out.print("Appointment ID: ");
+            int appointmentId = Integer.parseInt(scanner.nextLine());
 
-        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
+            scheduling.cancelAppointment(appointmentId);
+            System.out.println("Cancelled");
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void handleAvailableDoctors(DoctorManagementComponent doctors) {
+        var available = doctors.getAvailableDoctors();
+
+        if (available.isEmpty()) {
+            System.out.println("No doctors available");
+        } else {
+            System.out.println("Available Doctors:");
+            for (var doc : available) {
+                System.out.printf("ID: %d | Dr. %s | %s%n",
+                        doc.getId(), doc.getName(), doc.getSpecialization());
+            }
+        }
+    }
+
+    private static void handleClinicInfo() {
+        ClinicConfig config = ClinicConfig.getInstance();
+        System.out.println("Clinic Hours: " + config.getHours());
+        System.out.println("Appointment Types:");
+        System.out.println("- Online: $50.00");
+        System.out.println("- In-Person: $100.00");
+        System.out.println("- Follow-Up: $75.00");
+    }
+
+    private static void handleTodayAppointments(SchedulingComponent scheduling) {
+        var today = scheduling.getTodayAppointments();
+
+        if (today.isEmpty()) {
+            System.out.println("No appointments today");
+        } else {
+            System.out.println("Today's Appointments (" + today.size() + "):");
+            for (Appointment appt : today) {
+                System.out.printf("ID: %d | Doctor: %d | Time: %s%n",
+                        appt.getId(), appt.getDoctorId(), appt.getTime().toLocalTime());
+            }
+        }
+    }
+
+    private static void handleRevenue(BillingComponent billing) {
+        double revenue = billing.getTotalRevenue();
+        System.out.printf("Total Revenue: $%.2f%n", revenue);
+    }
+
+    private static void viewAppointmentSummary(Scanner scanner, AppointmentService appointmentService) {
+        System.out.println("\n--- Appointment Summary (Builder Pattern + Result<T> Demo) ---");
 
         try {
             System.out.print("Enter appointment ID: ");
             int appointmentId = Integer.parseInt(scanner.nextLine());
 
-            Optional<AppointmentSummary> summary = enhancedService.generateAppointmentSummary(appointmentId);
+            Result<AppointmentSummary> result = appointmentService.getSummary(appointmentId);
 
-            if (summary.isPresent()) {
-                System.out.println("\n=== Appointment Summary ===");
-                System.out.println(summary.get());
+            if (result.isSuccess()) {
+                System.out.println("\n" + result.getValue());
+                System.out.println("\nBuilt using Builder Pattern");
+                System.out.println("Returned using Result generic type");
             } else {
-                System.out.println("Appointment not found");
+                System.out.println(result.getError());
             }
 
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
-    }
-
-    private static void viewTodayAppointments() {
-        System.out.println("\n--- Today's Appointments ---");
-
-        EnhancedAppointmentService enhancedService = new EnhancedAppointmentService();
-        List<Appointment> todayAppointments = enhancedService.getTodayAppointments();
-
-        if (todayAppointments.isEmpty()) {
-            System.out.println("No appointments scheduled for today");
-        } else {
-            System.out.println("\nToday's Appointments (" + todayAppointments.size() + "):");
-            todayAppointments.forEach(appt ->
-                    System.out.printf("ID: %d | Doctor: %d | Time: %s | Status: %s | Type: %s%n",
-                            appt.getId(),
-                            appt.getDoctorId(),
-                            appt.getAppointmentTime().toLocalTime(),
-                            appt.getStatus(),
-                            appt.getAppointmentType())
-            );
-        }
-    }
-
-    private static void showClinicInfo() {
-        System.out.println("\n--- Clinic Information ---");
-
-        ClinicConfig config = ClinicConfig.getInstance();
-        System.out.println("Working Hours: " + config.getWorkingHoursString());
-        System.out.println("Appointment Duration: " + config.getAppointmentDurationMinutes() + " minutes");
-        System.out.println("Max Appointments Per Day: " + config.getMaxAppointmentsPerDay());
-
-        System.out.println("\nAppointment Types and Fees:");
-        System.out.println("- Online Consultation: $50.00");
-        System.out.println("- In-Person Visit: $100.00");
-        System.out.println("- Follow-Up: $75.00");
     }
 }

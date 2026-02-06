@@ -3,37 +3,23 @@ package edu.altu.medapp.model;
 import java.time.LocalDateTime;
 
 public class Appointment {
-    public static final String STATUS_SCHEDULED = "scheduled";
-    public static final String STATUS_CANCELLED = "cancelled";
-    public static final String STATUS_COMPLETED = "completed";
-
-    public static final String TYPE_ONLINE = "ONLINE";
-    public static final String TYPE_IN_PERSON = "IN_PERSON";
-    public static final String TYPE_FOLLOW_UP = "FOLLOW_UP";
-
     private int id;
     private int patientId;
     private int doctorId;
-    private LocalDateTime appointmentTime;
+    private LocalDateTime time;
     private String status;
-
-    private String appointmentType;
-    private double consultationFee;
+    private String type;
+    private double fee;
 
     public Appointment() {}
 
-    public Appointment(int patientId, int doctorId, LocalDateTime appointmentTime, String status) {
-        this(patientId, doctorId, appointmentTime, status, TYPE_IN_PERSON, 100.0);
-    }
-
-    public Appointment(int patientId, int doctorId, LocalDateTime appointmentTime,
-                       String status, String appointmentType, double consultationFee) {
+    public Appointment(int patientId, int doctorId, LocalDateTime time, String type, double fee) {
         this.patientId = patientId;
         this.doctorId = doctorId;
-        this.appointmentTime = appointmentTime;
-        this.status = status;
-        this.appointmentType = appointmentType;
-        this.consultationFee = consultationFee;
+        this.time = time;
+        this.status = "scheduled";
+        this.type = type;
+        this.fee = fee;
     }
 
     public int getId() { return id; }
@@ -45,22 +31,15 @@ public class Appointment {
     public int getDoctorId() { return doctorId; }
     public void setDoctorId(int doctorId) { this.doctorId = doctorId; }
 
-    public LocalDateTime getAppointmentTime() { return appointmentTime; }
-    public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
+    public LocalDateTime getTime() { return time; }
+    public void setTime(LocalDateTime time) { this.time = time; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public String getAppointmentType() { return appointmentType; }
-    public void setAppointmentType(String appointmentType) { this.appointmentType = appointmentType; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    public double getConsultationFee() { return consultationFee; }
-    public void setConsultationFee(double consultationFee) { this.consultationFee = consultationFee; }
-
-    @Override
-    public String toString() {
-        return "Appointment{id=" + id + ", patientId=" + patientId + ", doctorId=" + doctorId +
-                ", time=" + appointmentTime + ", status='" + status +
-                "', type='" + appointmentType + "', fee=" + consultationFee + "}";
-    }
+    public double getFee() { return fee; }
+    public void setFee(double fee) { this.fee = fee; }
 }

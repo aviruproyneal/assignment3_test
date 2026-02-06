@@ -1,38 +1,35 @@
 package edu.altu.medapp.service;
 
-import edu.altu.medapp.interfaces.IAppointmentType;
-import edu.altu.medapp.model.*;
+import edu.altu.medapp.model.Appointment;
+import java.time.LocalDateTime;
 
 public class AppointmentFactory {
-    public enum AppointmentType {
-        ONLINE, IN_PERSON, FOLLOW_UP
+
+    public static Appointment createOnline(int patientId, int doctorId, LocalDateTime time) {
+        return new Appointment(patientId, doctorId, time, "ONLINE", 50.0);
     }
 
-    public static IAppointmentType createAppointmentType(AppointmentType type) {
-        switch (type) {
-            case ONLINE:
-                return new OnlineAppointment();
-            case IN_PERSON:
-                return new InPersonAppointment();
-            case FOLLOW_UP:
-                return new FollowUpAppointment();
-            default:
-                throw new IllegalArgumentException("Unknown appointment type: " + type);
-        }
+    public static Appointment createInPerson(int patientId, int doctorId, LocalDateTime time) {
+        return new Appointment(patientId, doctorId, time, "IN_PERSON", 100.0);
     }
 
-    public static Appointment createAppointment(AppointmentType type, int patientId, int doctorId, java.time.LocalDateTime appointmentTime) {
-        IAppointmentType appointmentType = createAppointmentType(type);
+    public static Appointment createFollowUp(int patientId, int doctorId, LocalDateTime time) {
+        return new Appointment(patientId, doctorId, time, "FOLLOW_UP", 75.0);
+    }
 
-        String typeString;
-        switch (type) {
-            case ONLINE: typeString = Appointment.TYPE_ONLINE; break;
-            case IN_PERSON: typeString = Appointment.TYPE_IN_PERSON; break;
-            case FOLLOW_UP: typeString = Appointment.TYPE_FOLLOW_UP; break;
-            default: typeString = Appointment.TYPE_IN_PERSON;
+    public static Appointment create(String type, int patientId, int doctorId, LocalDateTime time) {
+        if (type == null) {
+            return createInPerson(patientId, doctorId, time);
         }
 
-        Appointment appointment = new Appointment(patientId, doctorId, appointmentTime, "scheduled", typeString, appointmentType.getBaseFee());
-        return appointment;
+        String normalizedType = type.trim().toUpperCase();
+
+        if (normalizedType.equals("ONLINE")) {
+            return createOnline(patientId, doctorId, time);
+        } else if (normalizedType.equals("FOLLOW_UP") || normalizedType.equals("FOLLOWUP")) {
+            return createFollowUp(patientId, doctorId, time);
+        } else {
+            return createInPerson(patientId, doctorId, time);
+        }
     }
 }

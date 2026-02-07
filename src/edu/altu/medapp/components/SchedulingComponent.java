@@ -8,9 +8,7 @@ import java.util.List;
 public class SchedulingComponent {
     private final AppointmentService appointmentService;
 
-    public SchedulingComponent() {
-        this.appointmentService = new AppointmentService();
-    }
+    public SchedulingComponent() {this.appointmentService = new AppointmentService();}
 
     public Appointment bookAppointment(int patientId, int doctorId, LocalDateTime time, String type) {
         return appointmentService.book(patientId, doctorId, time, type);
@@ -20,11 +18,5 @@ public class SchedulingComponent {
         appointmentService.cancel(appointmentId);
     }
 
-    public List<Appointment> getSchedule(int doctorId) {
-        return appointmentService.getDoctorSchedule(doctorId);
-    }
-
-    public List<Appointment> getTodayAppointments() {
-        return appointmentService.getToday();
-    }
+    public List<Appointment> getSchedule(int doctorId) {return appointmentService.getDoctorSchedule(doctorId);}
 }

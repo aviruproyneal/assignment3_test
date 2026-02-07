@@ -11,7 +11,5 @@ public class PatientRecordsComponent {
         this.appointmentService = new AppointmentService();
     }
 
-    public List<Appointment> getAppointments(int patientId) {
-        return appointmentService.getUpcoming(patientId);
-    }
+    public List<Appointment> getAppointments(int patientId) {return appointmentService.getUpcoming(patientId);}
 }

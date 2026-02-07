@@ -14,7 +14,5 @@ public class DoctorManagementComponent {
         this.availabilityService = new DoctorAvailabilityService();
     }
 
-    public List<Doctor> getAvailableDoctors() {
-        return availabilityService.getAvailable();
-    }
+    public List<Doctor> getAvailableDoctors() {return availabilityService.getAvailable();}
 }

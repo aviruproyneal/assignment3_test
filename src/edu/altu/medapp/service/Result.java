@@ -11,21 +11,13 @@ public class Result<T> {
         this.error = error;
     }
 
-    public static <T> Result<T> success(T value) {
-        return new Result<>(true, value, null);
-    }
+    public static <T> Result<T> success(T value) {return new Result<>(true, value, null);}
 
-    public static <T> Result<T> failure(String error) {
-        return new Result<>(false, null, error);
-    }
+    public static <T> Result<T> failure(String error) {return new Result<>(false, null, error);}
 
-    public boolean isSuccess() {
-        return ok;
-    }
+    public boolean isSuccess() {return ok;}
 
-    public T getValue() {
-        return value;
-    }
+    public T getValue() {return value;}
 
     public String getError() {
         return error;

@@ -12,10 +12,10 @@ public class DoctorRepository implements IDoctorRepository {
 
     @Override
     public void save(Doctor doctor) {
-        String sql = "INSERT INTO doctors (name, specialization, is_available) VALUES (?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            String sql = "INSERT INTO doctors (name, specialization, is_available) VALUES (?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             stmt.setString(1, doctor.getName());
             stmt.setString(2, doctor.getSpecialization());
@@ -28,77 +28,116 @@ public class DoctorRepository implements IDoctorRepository {
                 doctor.setId(rs.getInt(1));
             }
 
+            rs.close();
+            stmt.close();
+            conn.close();
+
         } catch (Exception e) {
-            throw new RuntimeException("Save doctor failed", e);
+            System.out.println("Error saving doctor: " + e.getMessage());
         }
     }
 
     @Override
     public Doctor findById(int id) {
-        String sql = "SELECT * FROM doctors WHERE id = ?";
-
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            String sql = "SELECT * FROM doctors WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, id);
+
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return mapToDoctor(rs);
+                Doctor doctor = new Doctor();
+                doctor.setId(rs.getInt("id"));
+                doctor.setName(rs.getString("name"));
+                doctor.setSpecialization(rs.getString("specialization"));
+                doctor.setAvailable(rs.getBoolean("is_available"));
+
+                rs.close();
+                stmt.close();
+                conn.close();
+
+                return doctor;
             }
-            throw new RuntimeException("Doctor not found: " + id);
+
+            rs.close();
+            stmt.close();
+            conn.close();
 
         } catch (Exception e) {
-            throw new RuntimeException("Find doctor failed", e);
+            System.out.println("Error finding doctor: " + e.getMessage());
         }
+
+        return null;
     }
 
     @Override
     public List<Doctor> findAll() {
-        List<Doctor> list = new ArrayList<>();
-        String sql = "SELECT * FROM doctors ORDER BY name";
+        List<Doctor> doctors = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT * FROM doctors ORDER BY name";
+            ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                list.add(mapToDoctor(rs));
+                Doctor doctor = new Doctor();
+                doctor.setId(rs.getInt("id"));
+                doctor.setName(rs.getString("name"));
+                doctor.setSpecialization(rs.getString("specialization"));
+                doctor.setAvailable(rs.getBoolean("is_available"));
+                doctors.add(doctor);
             }
 
+            rs.close();
+            stmt.close();
+            conn.close();
+
         } catch (Exception e) {
-            throw new RuntimeException("Find all doctors failed", e);
+            System.out.println("Error getting doctors: " + e.getMessage());
         }
 
-        return list;
+        return doctors;
     }
 
     @Override
     public List<Doctor> findAvailable() {
-        List<Doctor> list = new ArrayList<>();
-        String sql = "SELECT * FROM doctors WHERE is_available = true ORDER BY name";
+        List<Doctor> doctors = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT * FROM doctors WHERE is_available = true ORDER BY name";
+            ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                list.add(mapToDoctor(rs));
+                Doctor doctor = new Doctor();
+                doctor.setId(rs.getInt("id"));
+                doctor.setName(rs.getString("name"));
+                doctor.setSpecialization(rs.getString("specialization"));
+                doctor.setAvailable(rs.getBoolean("is_available"));
+                doctors.add(doctor);
             }
 
+            rs.close();
+            stmt.close();
+            conn.close();
+
         } catch (Exception e) {
-            throw new RuntimeException("Find available failed", e);
+            System.out.println("Error finding available doctors: " + e.getMessage());
         }
 
-        return list;
+        return doctors;
     }
 
     @Override
     public void update(Doctor doctor) {
-        String sql = "UPDATE doctors SET name = ?, specialization = ?, is_available = ? WHERE id = ?";
-
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            String sql = "UPDATE doctors SET name=?, specialization=?, is_available=? WHERE id=?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
 
             stmt.setString(1, doctor.getName());
             stmt.setString(2, doctor.getSpecialization());
@@ -107,17 +146,11 @@ public class DoctorRepository implements IDoctorRepository {
 
             stmt.executeUpdate();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Update doctor failed", e);
-        }
-    }
+            stmt.close();
+            conn.close();
 
-    private Doctor mapToDoctor(ResultSet rs) throws SQLException {
-        Doctor doctor = new Doctor();
-        doctor.setId(rs.getInt("id"));
-        doctor.setName(rs.getString("name"));
-        doctor.setSpecialization(rs.getString("specialization"));
-        doctor.setAvailable(rs.getBoolean("is_available"));
-        return doctor;
+        } catch (Exception e) {
+            System.out.println("Error updating doctor: " + e.getMessage());
+        }
     }
 }

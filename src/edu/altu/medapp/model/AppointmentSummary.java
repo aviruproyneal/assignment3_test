@@ -38,8 +38,6 @@ public class AppointmentSummary {
             return this;
         }
 
-        public AppointmentSummary build() {
-            return new AppointmentSummary(this);
-        }
+        public AppointmentSummary build() {return new AppointmentSummary(this);}
     }
 }

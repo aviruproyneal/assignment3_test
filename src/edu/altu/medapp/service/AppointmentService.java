@@ -47,9 +47,7 @@ public class AppointmentService {
     public Result<AppointmentSummary> getSummary(int appointmentId) {
         try {
             Appointment appointment = appointmentRepo.findById(appointmentId);
-            AppointmentSummary summary = new AppointmentSummary.Builder()
-                    .appointment(appointment)
-                    .build();
+            AppointmentSummary summary = new AppointmentSummary.Builder().appointment(appointment).build();
             return Result.success(summary);
         } catch (Exception e) {
             return Result.failure("Could not generate summary: " + e.getMessage());
@@ -68,20 +66,6 @@ public class AppointmentService {
         return appointmentRepo.findAll().stream()
                 .filter(appt -> appt.getPatientId() == patientId)
                 .filter(upcoming)
-                .collect(Collectors.toList());
-    }
-
-    public List<Appointment> getToday() {
-        LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
-        LocalDateTime todayEnd = todayStart.plusDays(1);
-
-        Predicate<Appointment> today = appt ->
-                appt.getTime().isAfter(todayStart) &&
-                        appt.getTime().isBefore(todayEnd) &&
-                        "scheduled".equals(appt.getStatus());
-
-        return appointmentRepo.findAll().stream()
-                .filter(today)
                 .collect(Collectors.toList());
     }
 

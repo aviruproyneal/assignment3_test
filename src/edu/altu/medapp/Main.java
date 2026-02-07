@@ -228,7 +228,6 @@ public class Main {
             if (result.isSuccess()) {
                 System.out.println("\n=== SUMMARY ===");
                 System.out.println(result.getValue());
-                System.out.println("\n(Generated using Builder pattern)");
             } else {
                 System.out.println("Error: " + result.getError());
             }

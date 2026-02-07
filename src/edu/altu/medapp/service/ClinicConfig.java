@@ -20,8 +20,4 @@ public class ClinicConfig {
     public boolean isOpen(LocalTime time) {
         return !time.isBefore(open) && !time.isAfter(close);
     }
-
-    public String getHours() {
-        return open + " to " + close;
-    }
 }

@@ -1,4 +1,4 @@
-package edu.altu.medapp.model;
+package edu.altu.medapp.PatientRecordsComponent.model;
 
 public class Patient {
     private int id;

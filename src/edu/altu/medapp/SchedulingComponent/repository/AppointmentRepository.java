@@ -1,8 +1,8 @@
-package edu.altu.medapp.repository;
+package edu.altu.medapp.SchedulingComponent.repository;
 
-import edu.altu.medapp.db.DatabaseConnection;
-import edu.altu.medapp.interfaces.IAppointmentRepository;
-import edu.altu.medapp.model.Appointment;
+import edu.altu.medapp.Shared.db.DatabaseConnection;
+import edu.altu.medapp.Shared.interfaces.IAppointmentRepository;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -151,26 +151,17 @@ public class AppointmentRepository implements IAppointmentRepository {
 
     @Override
     public boolean isTimeSlotTaken(int doctorId, LocalDateTime time) {
-        String sql = "SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND appointment_time = ? AND status != 'cancelled'";
+        String sql = "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_time = ? AND status != 'cancelled'";
 
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setInt(1, doctorId);
             stmt.setTimestamp(2, Timestamp.valueOf(time));
 
-            ResultSet rs = stmt.executeQuery();
-            boolean taken = false;
-
-            if (rs.next()) {
-                taken = rs.getInt("count") > 0;
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
             }
-
-            rs.close();
-            stmt.close();
-            conn.close();
-
-            return taken;
 
         } catch (Exception e) {
             throw new RuntimeException("Error checking time slot: " + e.getMessage());
@@ -179,27 +170,17 @@ public class AppointmentRepository implements IAppointmentRepository {
 
     @Override
     public void update(Appointment appointment) {
-        String sql = "UPDATE appointments SET patient_id = ?, doctor_id = ?, appointment_time = ?, status = ?, appointment_type = ?, consultation_fee = ? WHERE id = ?";
+        String sql = "UPDATE appointments SET status = ? WHERE id = ?";
 
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, appointment.getPatientId());
-            stmt.setInt(2, appointment.getDoctorId());
-            stmt.setTimestamp(3, Timestamp.valueOf(appointment.getTime()));
-            stmt.setString(4, appointment.getStatus());
-            stmt.setString(5, appointment.getType());
-            stmt.setDouble(6, appointment.getFee());
-            stmt.setInt(7, appointment.getId());
+            stmt.setString(1, appointment.getStatus());
+            stmt.setInt(2, appointment.getId());
 
-            int rows = stmt.executeUpdate();
-            if (rows == 0) {
-                throw new RuntimeException("Update failed - appointment not found");
+            if (stmt.executeUpdate() == 0) {
+                throw new RuntimeException("Appointment not found: " + appointment.getId());
             }
-
-            stmt.close();
-            conn.close();
 
         } catch (Exception e) {
             throw new RuntimeException("Error updating appointment: " + e.getMessage());

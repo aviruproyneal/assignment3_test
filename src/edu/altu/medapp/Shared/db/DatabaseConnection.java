@@ -1,4 +1,4 @@
-package edu.altu.medapp.db;
+package edu.altu.medapp.Shared.db;
 
 import java.io.FileInputStream;
 import java.sql.Connection;
@@ -24,7 +24,7 @@ public class DatabaseConnection {
                 throw new RuntimeException("DB_PASSWORD not set");
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load config", e);
+            throw new RuntimeException("Failed to load config file", e);
         }
     }
 

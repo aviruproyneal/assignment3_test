@@ -1,4 +1,4 @@
-package edu.altu.medapp.interfaces;
+package edu.altu.medapp.Shared.interfaces;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package edu.altu.medapp.model;
+package edu.altu.medapp.SchedulingComponent.model;
 
 import java.time.LocalDateTime;
 

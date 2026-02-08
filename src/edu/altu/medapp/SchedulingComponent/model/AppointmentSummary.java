@@ -1,13 +1,9 @@
-package edu.altu.medapp.model;
-
-import java.time.LocalDateTime;
+package edu.altu.medapp.SchedulingComponent.model;
 
 public class AppointmentSummary {
     private final Appointment appointment;
 
-    private AppointmentSummary(Builder builder) {
-        this.appointment = builder.appointment;
-    }
+    private AppointmentSummary(Builder builder) {this.appointment = builder.appointment;}
 
     @Override
     public String toString() {

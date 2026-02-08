@@ -1,6 +1,6 @@
-package edu.altu.medapp.service;
+package edu.altu.medapp.SchedulingComponent.service;
 
-import edu.altu.medapp.model.Appointment;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
 import java.time.LocalDateTime;
 
 public class AppointmentFactory {

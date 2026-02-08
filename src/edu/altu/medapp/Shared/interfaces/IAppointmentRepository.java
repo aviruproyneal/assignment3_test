@@ -1,6 +1,6 @@
-package edu.altu.medapp.interfaces;
+package edu.altu.medapp.Shared.interfaces;
 
-import edu.altu.medapp.model.Appointment;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
 import java.util.List;
 
 public interface IAppointmentRepository extends IRepository<Appointment> {

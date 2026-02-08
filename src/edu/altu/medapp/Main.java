@@ -1,26 +1,22 @@
 package edu.altu.medapp;
 
-import edu.altu.medapp.model.Appointment;
-import edu.altu.medapp.model.AppointmentSummary;
-import edu.altu.medapp.service.AppointmentService;
-import edu.altu.medapp.service.Result;
-
-import edu.altu.medapp.components.SchedulingComponent;
-import edu.altu.medapp.components.PatientRecordsComponent;
-import edu.altu.medapp.components.DoctorManagementComponent;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
+import edu.altu.medapp.SchedulingComponent.model.AppointmentSummary;
+import edu.altu.medapp.SchedulingComponent.service.AppointmentService;
+import edu.altu.medapp.SchedulingComponent.service.Result;
+import edu.altu.medapp.DoctorManagementComponent.repository.DoctorRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        SchedulingComponent scheduling = new SchedulingComponent();
-        PatientRecordsComponent patients = new PatientRecordsComponent();
-        DoctorManagementComponent doctors = new DoctorManagementComponent();
         AppointmentService appointmentService = new AppointmentService();
+        DoctorRepository doctorRepo = new DoctorRepository();
 
         System.out.println("=== Medical Appointment System ===\n");
 
@@ -40,19 +36,19 @@ public class Main {
 
             switch (input) {
                 case "1":
-                    bookAppointment(scanner, scheduling);
+                    bookAppointment(scanner, appointmentService);
                     break;
                 case "2":
-                    viewDoctorSchedule(scanner, scheduling);
+                    viewDoctorSchedule(scanner, appointmentService);
                     break;
                 case "3":
-                    viewPatientAppointments(scanner, patients);
+                    viewPatientAppointments(scanner, appointmentService);
                     break;
                 case "4":
-                    cancelAppointment(scanner, scheduling);
+                    cancelAppointment(scanner, appointmentService);
                     break;
                 case "5":
-                    showAvailableDoctors(doctors);
+                    showAvailableDoctors(doctorRepo);
                     break;
                 case "6":
                     getAppointmentSummary(scanner, appointmentService);
@@ -70,17 +66,15 @@ public class Main {
         System.out.println("Goodbye!");
     }
 
-    static void bookAppointment(Scanner scanner, SchedulingComponent scheduling) {
+    static void bookAppointment(Scanner scanner, AppointmentService service) {
         System.out.println("\n--- Book Appointment ---");
 
         try {
             System.out.print("Enter patient ID: ");
-            String patientInput = scanner.nextLine();
-            int patientId = Integer.parseInt(patientInput);
+            int patientId = Integer.parseInt(scanner.nextLine());
 
             System.out.print("Enter doctor ID: ");
-            String doctorInput = scanner.nextLine();
-            int doctorId = Integer.parseInt(doctorInput);
+            int doctorId = Integer.parseInt(scanner.nextLine());
 
             System.out.print("Enter date and time (YYYY-MM-DD HH:MM): ");
             String dateTimeInput = scanner.nextLine();
@@ -106,7 +100,7 @@ public class Main {
                 System.out.println("Defaulting to In-Person");
             }
 
-            Appointment appointment = scheduling.bookAppointment(patientId, doctorId, appointmentTime, type);
+            Appointment appointment = service.book(patientId, doctorId, appointmentTime, type);
             System.out.println("Appointment booked! ID: " + appointment.getId());
             System.out.println("Fee: $" + appointment.getFee());
 
@@ -119,15 +113,14 @@ public class Main {
         System.out.println();
     }
 
-    static void viewDoctorSchedule(Scanner scanner, SchedulingComponent scheduling) {
+    static void viewDoctorSchedule(Scanner scanner, AppointmentService service) {
         System.out.println("\n--- Doctor Schedule ---");
 
         try {
             System.out.print("Enter doctor ID: ");
-            String doctorInput = scanner.nextLine();
-            int doctorId = Integer.parseInt(doctorInput);
+            int doctorId = Integer.parseInt(scanner.nextLine());
 
-            var appointments = scheduling.getSchedule(doctorId);
+            List<Appointment> appointments = service.getDoctorSchedule(doctorId);
 
             if (appointments.isEmpty()) {
                 System.out.println("No appointments found for this doctor");
@@ -149,15 +142,14 @@ public class Main {
         System.out.println();
     }
 
-    static void viewPatientAppointments(Scanner scanner, PatientRecordsComponent patients) {
+    static void viewPatientAppointments(Scanner scanner, AppointmentService service) {
         System.out.println("\n--- Patient Appointments ---");
 
         try {
             System.out.print("Enter patient ID: ");
-            String patientInput = scanner.nextLine();
-            int patientId = Integer.parseInt(patientInput);
+            int patientId = Integer.parseInt(scanner.nextLine());
 
-            var appointments = patients.getAppointments(patientId);
+            List<Appointment> appointments = service.getUpcoming(patientId);
 
             if (appointments.isEmpty()) {
                 System.out.println("No upcoming appointments for patient " + patientId);
@@ -178,15 +170,14 @@ public class Main {
         System.out.println();
     }
 
-    static void cancelAppointment(Scanner scanner, SchedulingComponent scheduling) {
+    static void cancelAppointment(Scanner scanner, AppointmentService service) {
         System.out.println("\n--- Cancel Appointment ---");
 
         try {
             System.out.print("Enter appointment ID to cancel: ");
-            String appointmentInput = scanner.nextLine();
-            int appointmentId = Integer.parseInt(appointmentInput);
+            int appointmentId = Integer.parseInt(scanner.nextLine());
 
-            scheduling.cancelAppointment(appointmentId);
+            service.cancel(appointmentId);
             System.out.println("Appointment " + appointmentId + " cancelled successfully");
 
         } catch (Exception e) {
@@ -196,10 +187,10 @@ public class Main {
         System.out.println();
     }
 
-    static void showAvailableDoctors(DoctorManagementComponent doctors) {
+    static void showAvailableDoctors(DoctorRepository repo) {
         System.out.println("\n--- Available Doctors ---");
 
-        var availableDoctors = doctors.getAvailableDoctors();
+        var availableDoctors = repo.findAvailable();
 
         if (availableDoctors.isEmpty()) {
             System.out.println("No doctors available at the moment");
@@ -207,7 +198,7 @@ public class Main {
             System.out.println("Doctors currently available:");
             for (var doctor : availableDoctors) {
                 System.out.println("ID: " + doctor.getId() +
-                        " - Dr. " + doctor.getName() +
+                        " - " + doctor.getName() +
                         " (" + doctor.getSpecialization() + ")");
             }
         }
@@ -215,15 +206,14 @@ public class Main {
         System.out.println();
     }
 
-    static void getAppointmentSummary(Scanner scanner, AppointmentService appointmentService) {
+    static void getAppointmentSummary(Scanner scanner, AppointmentService service) {
         System.out.println("\n--- Appointment Summary ---");
 
         try {
             System.out.print("Enter appointment ID: ");
-            String appointmentInput = scanner.nextLine();
-            int appointmentId = Integer.parseInt(appointmentInput);
+            int appointmentId = Integer.parseInt(scanner.nextLine());
 
-            Result<AppointmentSummary> result = appointmentService.getSummary(appointmentId);
+            Result<AppointmentSummary> result = service.getSummary(appointmentId);
 
             if (result.isSuccess()) {
                 System.out.println("\n=== SUMMARY ===");

@@ -1,4 +1,4 @@
-package edu.altu.medapp.service;
+package edu.altu.medapp.SchedulingComponent.service;
 
 public class Result<T> {
     private final boolean ok;

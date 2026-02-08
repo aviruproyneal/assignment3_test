@@ -1,16 +1,15 @@
-package edu.altu.medapp.service;
+package edu.altu.medapp.SchedulingComponent.service;
 
-import edu.altu.medapp.exceptions.AppointmentConflictException;
-import edu.altu.medapp.exceptions.AppointmentNotFoundException;
-import edu.altu.medapp.exceptions.DoctorUnavailableException;
-import edu.altu.medapp.model.Appointment;
-import edu.altu.medapp.model.AppointmentSummary;
-import edu.altu.medapp.model.Doctor;
-import edu.altu.medapp.repository.AppointmentRepository;
-import edu.altu.medapp.repository.DoctorRepository;
+import edu.altu.medapp.SchedulingComponent.exceptions.AppointmentConflictException;
+import edu.altu.medapp.SchedulingComponent.exceptions.AppointmentNotFoundException;
+import edu.altu.medapp.DoctorManagementComponent.exceptions.DoctorUnavailableException;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
+import edu.altu.medapp.SchedulingComponent.model.AppointmentSummary;
+import edu.altu.medapp.DoctorManagementComponent.model.Doctor;
+import edu.altu.medapp.SchedulingComponent.repository.AppointmentRepository;
+import edu.altu.medapp.DoctorManagementComponent.repository.DoctorRepository;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -37,6 +36,9 @@ public class AppointmentService {
     public void cancel(int id) {
         try {
             Appointment appointment = appointmentRepo.findById(id);
+            if (appointment == null) {
+                throw new AppointmentNotFoundException("Appointment " + id + " not found");
+            }
             appointment.setStatus("cancelled");
             appointmentRepo.update(appointment);
         } catch (RuntimeException e) {
@@ -47,7 +49,12 @@ public class AppointmentService {
     public Result<AppointmentSummary> getSummary(int appointmentId) {
         try {
             Appointment appointment = appointmentRepo.findById(appointmentId);
-            AppointmentSummary summary = new AppointmentSummary.Builder().appointment(appointment).build();
+            if (appointment == null) {
+                return Result.failure("Appointment not found");
+            }
+            AppointmentSummary summary = new AppointmentSummary.Builder()
+                    .appointment(appointment)
+                    .build();
             return Result.success(summary);
         } catch (Exception e) {
             return Result.failure("Could not generate summary: " + e.getMessage());
@@ -60,12 +67,12 @@ public class AppointmentService {
 
     public List<Appointment> getUpcoming(int patientId) {
         LocalDateTime now = LocalDateTime.now();
-        Predicate<Appointment> upcoming = appt ->
-                appt.getTime().isAfter(now) && appt.getStatus().equals("scheduled");
+        Predicate<Appointment> isUpcoming = apt ->
+                apt.getTime().isAfter(now) && "scheduled".equals(apt.getStatus());
 
         return appointmentRepo.findAll().stream()
-                .filter(appt -> appt.getPatientId() == patientId)
-                .filter(upcoming)
+                .filter(apt -> apt.getPatientId() == patientId)
+                .filter(isUpcoming)
                 .collect(Collectors.toList());
     }
 
@@ -77,13 +84,12 @@ public class AppointmentService {
     }
 
     private void checkDoctor(int doctorId) {
-        try {
-            Doctor doctor = doctorRepo.findById(doctorId);
-            if (!doctor.isAvailable()) {
-                throw new DoctorUnavailableException("Doctor " + doctor.getName() + " unavailable");
-            }
-        } catch (RuntimeException e) {
+        Doctor doctor = doctorRepo.findById(doctorId);
+        if (doctor == null) {
             throw new DoctorUnavailableException("Doctor " + doctorId + " not found");
+        }
+        if (!doctor.isAvailable()) {
+            throw new DoctorUnavailableException("Doctor " + doctor.getName() + " unavailable");
         }
     }
 
